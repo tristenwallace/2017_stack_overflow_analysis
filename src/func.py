@@ -1,4 +1,21 @@
 import pandas as pd
+import numpy as np
+
+def get_description(col_name, schema):
+    '''
+    INPUT:
+        - schema (schema): pandas dataframe with the schema of the data
+        - col_name (string): name of the column you want a description for
+    
+    OUTPUT:
+        - desc (string): description of the column
+    '''
+    
+    desc = schema[schema["Column"] == col_name]['Question']
+    
+    return desc
+
+
 
 def separate_values(df, col):
     ''' 
@@ -24,17 +41,12 @@ def separate_values(df, col):
     return new_df
 
 
-
-def get_description(col_name, schema):
-    '''
-    INPUT:
-        - schema (schema): pandas dataframe with the schema of the data
-        - col_name (string): name of the column you want a description for
+def get_df_props(df):
+    df = df.CousinEducation.value_counts().reset_index()
+    df.rename(columns={"CousinEducation":"Method"}, inplace=True)
+    df = separate_values(df, "Method")
+    df["Prop"] = df["Count"]/df["Count"].sum()
+    df.drop("Count", axis=1, inplace=True)
     
-    OUTPUT:
-        - desc (string): description of the column
-    '''
     
-    desc = schema[schema["Column"] == col_name]['Question']
-    
-    return desc
+    return df
