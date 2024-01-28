@@ -140,3 +140,59 @@ def create_linear_mod(X, y, test_size=.3, rand_state=42):
 
 
 
+def find_optimal_feature_cutoff(X, y, cutoffs, plot=False, test_size=.3, rand_state=42):
+    '''
+    INPUT:
+        X (pandas dataframe): feature matrix
+        y (pandas dataframe): target variable
+        cutoffs (list of ints): cutoff for number of non-zero values in dummy vars
+        test_size (float): determines proportion of data as test data
+        plot (bool): If true - plot result
+
+    OUTPUT:
+        best_cutoff: Optimal cutoff int
+        scores_test (list of floats): r2 scores from test data
+        scores_train (list of floats): r2 scores from train data
+        reg (model): sklearn regression model
+        X_train, X_test, y_train, y_test: train test split from sklearn
+    '''
+    scores_test, scores_train, num_feats, results = [], [], [], dict()
+
+    ### Determine best cutoff
+    for cutoff in cutoffs:
+
+        # X matrix feature reduction
+        reduced_X = X.iloc[:, np.where((X.sum() > cutoff) == True)[0]]
+        num_feats.append(reduced_X.shape[1])
+        
+        # Create model
+        reg, X_train, X_test, y_train, y_test = \
+        create_linear_mod(reduced_X, y, test_size=test_size, rand_state=rand_state)
+
+        # Scores
+        scores_train.append(reg.score(X_train, y_train))
+        scores_test.append(reg.score(X_test, y_test))
+        results[str(cutoff)] = reg.score(X_test, y_test)
+    print(results)
+    if plot:
+        plt.plot(num_feats, scores_test, label="Test", alpha=.5)
+        plt.plot(num_feats, scores_train, label="Train", alpha=.5)
+        plt.xlabel("Number of Features")
+        plt.ylabel("Required")
+        plt.title("Rsquared by Number of Features")
+        plt.legend(loc=1)
+        plt.show()
+    
+    ### Get best model
+    best_cutoff = max(results, key=results.get)
+    
+    # X matrix feature reduction
+    reduced_X = X.iloc[:, np.where((X.sum() > int(best_cutoff)) == True)[0]]
+    num_feats.append(reduced_X.shape[1])
+
+    # Create model
+    reg, X_train, X_test, y_train, y_test = \
+    create_linear_mod(reduced_X, y, test_size=test_size, rand_state=rand_state)
+
+    return best_cutoff, scores_test, scores_train, reg, X_train, X_test, y_train, y_test
+
