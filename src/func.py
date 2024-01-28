@@ -1,5 +1,7 @@
-import pandas as pd
+### Import packages
 import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 
@@ -81,22 +83,17 @@ def create_dummy_df(df, cat_cols, dummy_na):
     return df
 
 
-
-def clean_fit_linear_mod(df, target_col, cat_cols, dummy_na, test_size=.3, rand_state=42):
+def clean_data(df, target_col, cat_cols, dummy_na):
     '''
-    INPUT:
-        df - a dataframe holding all the variables of interest
-        response_col - a string holding the name of the column 
+    INPUT
+        df - pandas dataframe 
+        target_col - a string holding the name of the column 
         cat_cols - list of strings that are associated with names of the categorical columns
         dummy_na - Bool holding whether you want to dummy NA vals of categorical columns or not
-        test_size - a float between [0,1] about what proportion of data should be in the test dataset
-        rand_state - an int that is provided as the random state for splitting the data into training and test 
     
-    OUTPUT:
-        test_score - float - r2 score on the test data
-        train_score - float - r2 score on the test data
-        lm_model - model object from sklearn
-        X_train, X_test, y_train, y_test - output from sklearn train test split used for optimal model
+    OUTPUT
+        X - A matrix holding all of the variables you want to consider when predicting the response
+        y - the corresponding response vector
     '''
     #Drop the rows with missing response values
     df  = df.dropna(subset=[target_col], axis=0)
@@ -112,17 +109,34 @@ def clean_fit_linear_mod(df, target_col, cat_cols, dummy_na, test_size=.3, rand_
     # Fill the mean
     df = df.apply(fill_mean, axis=0)
 
-    # Train test split
+    # Create feature (X) and target (y) matrices
     X = df.drop(target_col, axis=1)
     y = df[target_col]
+    
+    return X, y
+
+
+
+def create_linear_mod(X, y, test_size=.3, rand_state=42):
+    '''
+    INPUT:
+        X (pandas dataframe): feature matrix
+        y (pandas dataframe): target variable
+        test_size - a float between [0,1] about what proportion of data should be in the test dataset
+        rand_state - an int that is provided as the random state for splitting the data into training and test 
+    
+    OUTPUT:
+        reg - model object from sklearn
+        X_train, X_test, y_train, y_test - output from sklearn train test split used for optimal model
+    '''
+
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=rand_state)
 
     # Fit Model
     reg = LinearRegression()
     reg.fit(X_train, y_train)
 
-    # Scores
-    test_score = reg.score(X_test, y_test)
-    train_score = reg.score(X_train, y_train)
+    return reg, X_train, X_test, y_train, y_test
 
-    return test_score, train_score, reg, X_train, X_test, y_train, y_test
+
+
